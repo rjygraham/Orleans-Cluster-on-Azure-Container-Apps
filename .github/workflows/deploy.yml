@@ -154,9 +154,11 @@ jobs:
 
           az extension add --name containerapp --yes
 
-          # Retrieve ACR Login Server value from deployment output
-          ACR_LOGIN_SERVER=$(az deployment group show -g ${{ env.RESOURCE_GROUP_NAME }} -n main --query properties.outputs.acrLoginServer.value | tr -d '"')
-          echo "ACR_LOGIN_SERVER=$ACR_LOGIN_SERVER" >> $GITHUB_ENV
+    - name: Set ACR_LOGIN_SERVER
+      run: |
+        # Retrieve ACR Login Server value from deployment output
+        ACR_LOGIN_SERVER=$(az deployment group show -g ${{ env.RESOURCE_GROUP_NAME }} -n main --query properties.outputs.acrLoginServer.value | tr -d '"')
+        echo "ACR_LOGIN_SERVER=$ACR_LOGIN_SERVER" >> $GITHUB_ENV
 
     - name: Deploy Silo
       uses: azure/CLI@v1
