@@ -81,16 +81,19 @@ jobs:
       run: |
         set -euo pipefail
         # see https://cloudarchitected.com/2021/09/logging-into-acr-in-github-actions/
-        # see https://github.com/Azure/acr/blob/main/docs/AAD-OAuth.md#calling-post-oauth2exchange-to-get-an-acr-refresh-token
 
         # Retrieve ACR Login Server value from deployment output
-        ACR_LOGIN_SERVER=$(az deployment group show -g orleans-cluster-on-container-apps -n main --query properties.outputs.acrLoginServer.value | tr -d '"')
+        ACR_LOGIN_SERVER=$(az deployment group show -g ${{ env.RESOURCE_GROUP_NAME }} -n main --query properties.outputs.acrLoginServer.value | tr -d '"')
         echo "ACR_LOGIN_SERVER=$ACR_LOGIN_SERVER" >> $GITHUB_ENV
 
+        # see https://github.com/Azure/acr/blob/main/docs/AAD-OAuth.md#calling-post-oauth2exchange-to-get-an-acr-refresh-token
         access_token=$(az account get-access-token --query accessToken -o tsv)
-        refresh_token=$(curl https://${{ env.ACR_LOGIN_SERVER }}/oauth2/exchange -v -d "grant_type=access_token&service=${{ env.ACR_LOGIN_SERVER }}&access_token=$access_token" | jq -r .refresh_token)
+        # refresh_token=$(curl https://${{ env.ACR_LOGIN_SERVER }}/oauth2/exchange -v -d "grant_type=access_token&service=${{ env.ACR_LOGIN_SERVER }}&access_token=$access_token" | jq -r .refresh_token)
+        refresh_token=$(curl https://$ACR_LOGIN_SERVER/oauth2/exchange -v -d "grant_type=access_token&service=$ACR_LOGIN_SERVER&access_token=$access_token" | jq -r .refresh_token)
+        
         # The null GUID 0000... tells the container registry that this is an ACR refresh token during the login flow
-        docker login -u 00000000-0000-0000-0000-000000000000 --password-stdin ${{ env.ACR_LOGIN_SERVER }} <<< "$refresh_token"
+        # docker login -u 00000000-0000-0000-0000-000000000000 --password-stdin ${{ env.ACR_LOGIN_SERVER }} <<< "$refresh_token"
+        docker login -u 00000000-0000-0000-0000-000000000000 --password-stdin $ACR_LOGIN_SERVER <<< "$refresh_token"
 
     - name: Build and push Silo image to registry
       uses: docker/build-push-action@v2
