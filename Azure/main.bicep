@@ -117,3 +117,4 @@ module workerserviceclient 'workerserviceclient.bicep' = {
   }
 }
 
+output acrLoginServer string = acr.properties.loginServer
